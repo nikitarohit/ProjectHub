@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- AUTH GUARD — developer aur client dono allowed, admin nahi -->
+    <script src="auth.js"></script>
+    <script>(function(){
+        var r=localStorage.getItem('user');
+        if(!r){window.location.replace('login.html');return;}
+        var u=JSON.parse(r);
+        if(u.role==='ADMIN'||u.role==='admin') window.location.replace('Admin.html');
+        // CLIENT aur DEVELOPER dono yahan aa sakte hain ✅
+    })();</script>
+
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — ProjectHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{--cyan:#00d4ff;--cyan-dim:rgba(0,212,255,0.12);--bg:#0d0f1a;--bg-card:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--border-focus:rgba(0,212,255,0.5);--text-primary:#eef0ff;--text-secondary:rgba(200,210,240,0.55);--text-muted:rgba(200,210,240,0.3);--green:#22c97a;--amber:#f5a623;--red:#ff5e5e;--sidebar-w:240px}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--text-primary);display:flex}
+        body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 50% 60% at 5% 40%,rgba(0,100,180,0.14) 0%,transparent 65%);pointer-events:none}
+        body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+        .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:rgba(10,13,28,0.9);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 20px;z-index:10;backdrop-filter:blur(12px)}
+        .sidebar-brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+        .brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--cyan),#4facfe);border-radius:8px;display:flex;align-items:center;justify-content:center}
+        .brand-icon svg{width:18px;height:18px}
+        .brand-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text-primary)}
+        .role-pill{display:inline-flex;align-items:center;background:var(--cyan-dim);border:1px solid rgba(0,212,255,0.2);color:var(--cyan);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px;margin-top:6px}
+        .nav-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);padding:0 8px;margin-bottom:8px}
+        .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13.5px;color:var(--text-secondary);transition:all 0.2s;margin-bottom:2px;text-decoration:none}
+        .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.7}
+        .nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text-primary)}
+        .nav-item.active{background:var(--cyan-dim);color:var(--cyan);font-weight:500}
+        .nav-item.active svg{opacity:1}
+        .nav-item.danger{color:var(--red)}
+        .nav-item.danger:hover{background:rgba(255,94,94,0.1)}
+        .sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding-top:20px}
+        .user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);margin-bottom:8px}
+        .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00bfdf,#4facfe);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#001830;flex-shrink:0}
+        .avatar.dev{background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+        .user-name-text{font-size:13px;font-weight:500;color:var(--text-primary)}
+        .user-role-text{font-size:11px;color:var(--text-muted)}
+        .main{margin-left:var(--sidebar-w);flex:1;position:relative;z-index:1;padding:40px 44px}
+        .topbar{margin-bottom:32px;animation:rise 0.6s cubic-bezier(0.22,1,0.36,1) both}
+        .page-eyebrow{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:6px}
+        .page-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:-0.6px;color:var(--text-primary)}
+        .profile-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;animation:rise 0.6s 0.1s cubic-bezier(0.22,1,0.36,1) both}
+        .avatar-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px 24px;display:flex;flex-direction:column;align-items:center;text-align:center}
+        .big-avatar{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#00bfdf,#4facfe);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:#001830;margin-bottom:16px;box-shadow:0 0 0 4px rgba(0,212,255,0.15),0 0 0 8px rgba(0,212,255,0.06)}
+        .big-avatar.dev{background:linear-gradient(135deg,#a78bfa,#7c3aed);box-shadow:0 0 0 4px rgba(167,139,250,0.15),0 0 0 8px rgba(167,139,250,0.06)}
+        .av-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+        .av-email{font-size:12.5px;color:var(--text-muted);margin-bottom:14px}
+        .av-role-badge{display:inline-flex;align-items:center;gap:5px;background:var(--cyan-dim);border:1px solid rgba(0,212,255,0.2);color:var(--cyan);font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;margin-bottom:24px}
+        .av-role-badge.dev{background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.25);color:#a78bfa}
+        .av-role-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+        .stat-row{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .mini-stat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:12px}
+        .mini-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text-primary)}
+        .mini-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px}
+        .details-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px}
+        .card-section{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+        .field{display:flex;flex-direction:column;gap:6px}
+        .field-label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted)}
+        .field-wrap{position:relative}
+        .field-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-muted);pointer-events:none;transition:color 0.2s}
+        .field-wrap:focus-within .field-icon{color:var(--cyan)}
+        .field-wrap input{width:100%;padding:11px 13px 11px 38px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:9px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:all 0.2s}
+        .field-wrap input::placeholder{color:var(--text-muted)}
+        .field-wrap input:focus{border-color:var(--border-focus);background:rgba(0,212,255,0.04);box-shadow:0 0 0 3px rgba(0,212,255,0.07)}
+        .field-wrap input[readonly]{opacity:0.4;cursor:not-allowed}
+        .banner{border-radius:10px;padding:11px 16px;font-size:13px;margin-bottom:16px;display:none}
+        .banner.show{display:block}
+        .banner.error{background:rgba(255,94,94,0.1);border:1px solid rgba(255,94,94,0.3);color:var(--red)}
+        .banner.success{background:rgba(34,201,122,0.1);border:1px solid rgba(34,201,122,0.3);color:var(--green)}
+        .btn-save{padding:12px 30px;background:linear-gradient(135deg,#00bfdf,#4facfe);border:none;border-radius:10px;color:#001830;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+        .btn-save::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.18),transparent 60%)}
+        .btn-save span{position:relative;z-index:1}
+        .btn-save:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,0.4)}
+        .btn-save:disabled{opacity:0.55;cursor:not-allowed;transform:none}
+        @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+        @media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:24px 20px}.profile-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon"><svg viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="6.5" height="6.5" rx="1.5" fill="#001830"/><rect x="10.5" y="1" width="6.5" height="6.5" rx="1.5" fill="#001830" opacity="0.7"/><rect x="1" y="10.5" width="6.5" height="6.5" rx="1.5" fill="#001830" opacity="0.7"/><rect x="10.5" y="10.5" width="6.5" height="6.5" rx="1.5" fill="#001830" opacity="0.4"/></svg></div>
+        <span class="brand-name">ProjectHub</span>
+    </div>
+    <div class="role-pill" id="sb-role-pill">CLIENT</div>
+    <p class="nav-label">Menu</p>
+
+    <!-- CLIENT nav (default) -->
+    <div id="client-nav">
+        <a class="nav-item" href="index.html"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>Dashboard</a>
+        <a class="nav-item" href="MyProjects.html"><svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>My Projects</a>
+        <a class="nav-item" href="deadlines.html"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1v6l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/></svg>Deadlines</a>
+        <a class="nav-item" href="Messages.html"><svg viewBox="0 0 16 16" fill="none"><path d="M14 2H2v9h3v3l4-3h5V2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Messages</a>
+        <a class="nav-item" href="ClientChat.html"><svg viewBox="0 0 16 16" fill="none"><path d="M2 2h12v10H9l-3 3v-3H2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Chat with Admin</a>
+        <a class="nav-item active" href="Profile.html"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 13.5c0-2.485 2.686-4.5 6-4.5s6 2.015 6 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Profile</a>
+    </div>
+
+    <!-- DEVELOPER nav (hidden by default, shown via JS) -->
+    <div id="dev-nav" style="display:none">
+        <a class="nav-item" href="MyTasks.html"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>My Tasks</a>
+        <a class="nav-item active" href="Profile.html"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 13.5c0-2.485 2.686-4.5 6-4.5s6 2.015 6 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Profile</a>
+    </div>
+
+    <div class="sidebar-bottom">
+        <div class="user-pill">
+            <div class="avatar" id="sb-avatar">?</div>
+            <div>
+                <div class="user-name-text" id="sb-name">…</div>
+                <div class="user-role-text" id="sb-role-txt">client</div>
+            </div>
+        </div>
+        <a class="nav-item danger" href="#" onclick="doLogout()">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Logout
+        </a>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <p class="page-eyebrow">Account</p>
+        <h1 class="page-title">My Profile</h1>
+    </div>
+    <div class="profile-grid">
+        <div class="avatar-card">
+            <div class="big-avatar" id="big-av">?</div>
+            <div class="av-name"  id="av-name">Loading…</div>
+            <div class="av-email" id="av-email">—</div>
+            <div class="av-role-badge" id="av-role-badge">Client</div>
+            <div class="stat-row">
+                <div class="mini-stat"><div class="mini-val" id="stat-a">—</div><div class="mini-lbl" id="stat-a-lbl">Projects</div></div>
+                <div class="mini-stat"><div class="mini-val" id="stat-b">—</div><div class="mini-lbl" id="stat-b-lbl">Active</div></div>
+            </div>
+        </div>
+
+        <div class="details-card">
+            <div class="card-section">Personal Information</div>
+            <div class="banner error"   id="err-banner"></div>
+            <div class="banner success" id="ok-banner"></div>
+            <div class="form-grid">
+                <div class="field">
+                    <label class="field-label">Full Name</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        <input type="text" id="f-name" placeholder="Your full name">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label">Email Address</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 5.5L7.5 9.5L14 5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        <input type="email" id="f-email" placeholder="your@email.com">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label">Role</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        <input type="text" id="f-role" readonly>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label">Member ID</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h7M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        <input type="text" id="f-id" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-section" style="margin-top:8px;">Change Password</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label class="field-label">New Password</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 15 15" fill="none"><rect x="2" y="7" width="11" height="7" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        <input type="password" id="f-pass" placeholder="Leave blank to keep current">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="field-label">Confirm Password</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 15 15" fill="none"><rect x="2" y="7" width="11" height="7" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        <input type="password" id="f-pass2" placeholder="Confirm new password">
+                    </div>
+                </div>
+            </div>
+            <button class="btn-save" id="save-btn" onclick="saveProfile()">
+                <span id="save-txt">Save Changes →</span>
+            </button>
+        </div>
+    </div>
+</main>
+
+<script>
+    var user = JSON.parse(localStorage.getItem('user'));
+    var isDev = user.role === 'DEVELOPER' || user.role === 'developer';
+
+    // ── Setup sidebar based on role ──
+    if (isDev) {
+        document.getElementById('client-nav').style.display = 'none';
+        document.getElementById('dev-nav').style.display = 'block';
+        document.getElementById('sb-role-pill').textContent = 'DEVELOPER';
+        document.getElementById('sb-role-txt').textContent  = 'developer';
+        document.getElementById('sb-avatar').classList.add('dev');
+    }
+
+    function doLogout(){
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.replace('login.html');
+    }
+    function initials(n){
+        if(!n) return '?';
+        return n.trim().split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    }
+
+    // ── Fill sidebar ──
+    document.getElementById('sb-name').textContent   = user.name || 'User';
+    document.getElementById('sb-avatar').textContent = initials(user.name);
+
+    // ── Fill profile card ──
+    var bigAv = document.getElementById('big-av');
+    bigAv.textContent = initials(user.name);
+    if (isDev) bigAv.classList.add('dev');
+
+    document.getElementById('av-name').textContent  = user.name  || '—';
+    document.getElementById('av-email').textContent = user.email || '—';
+
+    var roleBadge = document.getElementById('av-role-badge');
+    if (isDev) {
+        roleBadge.textContent = 'Developer';
+        roleBadge.classList.add('dev');
+    } else {
+        roleBadge.textContent = 'Client';
+    }
+
+    // ── Fill form fields ──
+    document.getElementById('f-name').value  = user.name  || '';
+    document.getElementById('f-email').value = user.email || '';
+    document.getElementById('f-role').value  = user.role  || '';
+    document.getElementById('f-id').value    = '#' + user.id;
+
+    // ── Load stats ──
+    if (isDev) {
+        // Developer: show total tasks + done tasks
+        document.getElementById('stat-a-lbl').textContent = 'Total Tasks';
+        document.getElementById('stat-b-lbl').textContent = 'Completed';
+        authFetch('/tasks/developer/' + user.id)
+            .then(function(r){ return r.json(); })
+            .then(function(tasks){
+                document.getElementById('stat-a').textContent = tasks.length;
+                document.getElementById('stat-b').textContent = tasks.filter(function(t){ return t.status === 'DONE'; }).length;
+            })
+            .catch(function(){
+                document.getElementById('stat-a').textContent = '—';
+                document.getElementById('stat-b').textContent = '—';
+            });
+    } else {
+        // Client: show total projects + in-progress
+        document.getElementById('stat-a-lbl').textContent = 'Projects';
+        document.getElementById('stat-b-lbl').textContent = 'In Progress';
+        authFetch('/clients/' + user.id + '/projects')
+            .then(function(r){ return r.json(); })
+            .then(function(projects){
+                document.getElementById('stat-a').textContent = projects.length;
+                document.getElementById('stat-b').textContent = projects.filter(function(p){
+                    return (p.status||'').toUpperCase() === 'IN_PROGRESS';
+                }).length;
+            })
+            .catch(function(){
+                document.getElementById('stat-a').textContent = '—';
+                document.getElementById('stat-b').textContent = '—';
+            });
+    }
+
+    // ── Save profile ──
+    function saveProfile(){
+        var name  = document.getElementById('f-name').value.trim();
+        var email = document.getElementById('f-email').value.trim();
+        var pass  = document.getElementById('f-pass').value;
+        var pass2 = document.getElementById('f-pass2').value;
+        var btn   = document.getElementById('save-btn');
+        var txt   = document.getElementById('save-txt');
+        clearBanners();
+
+        if(!name)  { showErr('Name cannot be empty.'); return; }
+        if(!email) { showErr('Email cannot be empty.'); return; }
+        if(pass && pass.length < 4) { showErr('Password must be at least 4 characters.'); return; }
+        if(pass && pass !== pass2)  { showErr('Passwords do not match.'); return; }
+
+        btn.disabled = true; txt.textContent = 'Saving…';
+        var body = { name: name, email: email };
+        if(pass) body.password = pass;
+
+        authFetch('/users/' + user.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if(data.error){ showErr(data.error); return; }
+                // Update localStorage
+                var updated = JSON.parse(JSON.stringify(user));
+                updated.name  = data.name;
+                updated.email = data.email;
+                localStorage.setItem('user', JSON.stringify(updated));
+                user = updated;
+                // Update UI
+                document.getElementById('big-av').textContent   = initials(data.name);
+                document.getElementById('av-name').textContent  = data.name;
+                document.getElementById('av-email').textContent = data.email;
+                document.getElementById('sb-name').textContent  = data.name;
+                document.getElementById('sb-avatar').textContent= initials(data.name);
+                document.getElementById('f-pass').value  = '';
+                document.getElementById('f-pass2').value = '';
+                showOk('✓ Profile saved successfully!');
+            })
+            .catch(function(){ showErr('Cannot reach server. Please try again.'); })
+            .finally(function(){ btn.disabled = false; txt.textContent = 'Save Changes →'; });
+    }
+
+    function showErr(m){ var e=document.getElementById('err-banner'); e.textContent=m; e.classList.add('show'); }
+    function showOk(m){  var e=document.getElementById('ok-banner');  e.textContent=m; e.classList.add('show'); setTimeout(function(){ e.classList.remove('show'); }, 3000); }
+    function clearBanners(){ document.getElementById('err-banner').classList.remove('show'); document.getElementById('ok-banner').classList.remove('show'); }
+</script>
+</body>
+</html>

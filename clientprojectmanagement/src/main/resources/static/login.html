@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — ProjectHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --cyan: #00d4ff; --cyan-dim: rgba(0,212,255,0.12);
+            --bg: #0d0f1a; --bg-input: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.1); --border-focus: rgba(0,212,255,0.6);
+            --text-primary: #f0f2ff; --text-secondary: rgba(200,210,240,0.55);
+            --text-muted: rgba(200,210,240,0.3);
+            --red: #ff5e5e; --green: #22c97a;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse 60% 50% at 15% 50%, rgba(0,100,180,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 60% at 80% 20%, rgba(0,212,255,0.08) 0%, transparent 60%), #0d0f1a; }
+        .bg::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px); background-size: 48px 48px; }
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; animation: drift 14s ease-in-out infinite alternate; }
+        .orb-1 { width: 500px; height: 500px; top: -130px; left: -130px; background: radial-gradient(circle, rgba(0,150,220,0.2), transparent 70%); }
+        .orb-2 { width: 300px; height: 300px; bottom: -60px; right: 18%; background: radial-gradient(circle, rgba(0,212,255,0.1), transparent 70%); animation-delay: -6s; }
+        @keyframes drift { from { transform: translateY(0); } to { transform: translateY(28px); } }
+
+        /* PAGE CARD */
+        .page { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 500px; width: min(1000px, 94vw); min-height: 640px; border-radius: 28px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 40px 80px rgba(0,0,0,0.6); animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes rise { from { opacity: 0; transform: translateY(24px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+        /* LEFT */
+        .left { background: linear-gradient(135deg, rgba(0,80,160,0.25), rgba(0,20,50,0.6)); padding: 60px 52px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--border); position: relative; overflow: hidden; }
+        .left::before { content: ''; position: absolute; width: 280px; height: 280px; border: 1px solid rgba(0,212,255,0.1); border-radius: 50%; bottom: -90px; right: -90px; }
+        .left::after  { content: ''; position: absolute; width: 160px; height: 160px; border: 1px solid rgba(0,212,255,0.06); border-radius: 50%; bottom: -20px; right: -20px; }
+        .brand-mark { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .brand-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--cyan), #4facfe); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon svg { width: 22px; height: 22px; }
+        .brand-name { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); }
+        .brand-tag { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 28px; }
+        .headline { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
+        .headline em { font-style: normal; color: var(--cyan); }
+        .features { display: flex; flex-direction: column; gap: 11px; }
+        .feature { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
+        .feature::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); opacity: 0.6; flex-shrink: 0; }
+
+        /* RIGHT */
+        .right { background: rgba(10,13,28,0.9); padding: 44px 48px; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
+
+        /* TAB SWITCHER (Login / Sign Up) */
+        .page-tabs { display: flex; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 4px; margin-bottom: 24px; }
+        .page-tab { flex: 1; padding: 10px; border-radius: 10px; border: none; background: transparent; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .page-tab.active { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(0,212,255,0.3); }
+
+        /* ROLE TABS (Admin / Client) inside each form */
+        .role-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .role-tab { flex: 1; padding: 8px; border-radius: 9px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .role-tab svg { width: 13px; height: 13px; }
+        .role-tab.active { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0,212,255,0.3); }
+        .role-tab:hover:not(.active) { border-color: rgba(255,255,255,0.15); color: var(--text-secondary); }
+
+        /* FORM TITLE */
+        .form-eyebrow { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 4px; }
+        .form-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; }
+
+        /* BANNER */
+        .banner { border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
+        .banner.show { display: block; }
+        .banner.error   { background: rgba(255,94,94,0.1);  border: 1px solid rgba(255,94,94,0.3);  color: var(--red); }
+        .banner.success { background: rgba(34,201,122,0.1); border: 1px solid rgba(34,201,122,0.3); color: var(--green); }
+
+        /* FIELDS */
+        .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+        .field-label { font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); }
+        .field-wrap { position: relative; }
+        .field-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-muted); pointer-events: none; transition: color 0.2s; }
+        .field-wrap:focus-within .field-icon { color: var(--cyan); }
+        .field-wrap input { width: 100%; padding: 11px 13px 11px 38px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 9px; color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 13.5px; outline: none; transition: all 0.2s; }
+        .field-wrap input::placeholder { color: var(--text-muted); }
+        .field-wrap input:focus { border-color: var(--border-focus); background: rgba(0,212,255,0.04); box-shadow: 0 0 0 3px rgba(0,212,255,0.07); }
+        .toggle-pass { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 0; transition: color 0.2s; }
+        .toggle-pass:hover { color: var(--cyan); }
+        .toggle-pass svg { width: 15px; height: 15px; display: block; }
+
+        /* FORGOT */
+        .forgot-row { display: flex; justify-content: flex-end; margin-top: -6px; margin-bottom: 16px; }
+        .forgot-link { font-size: 12px; color: var(--cyan); text-decoration: none; opacity: 0.8; }
+        .forgot-link:hover { opacity: 1; }
+
+        /* MAIN BUTTON */
+        .btn-main { width: 100%; padding: 12px; background: linear-gradient(135deg, #00bfdf, #4facfe); border: none; border-radius: 10px; color: #001830; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; margin-bottom: 16px; }
+        .btn-main::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 60%); }
+        .btn-main span { position: relative; z-index: 1; }
+        .btn-main:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,212,255,0.4); }
+        .btn-main:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+        /* DIVIDER */
+        .divider { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 12px; margin-bottom: 14px; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* GOOGLE BUTTON */
+        .btn-google { width: 100%; padding: 11px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .btn-google:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* SWITCH LINK */
+        .switch-row { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 14px; }
+        .switch-link { color: var(--cyan); cursor: pointer; text-decoration: none; }
+        .switch-link:hover { text-decoration: underline; }
+
+        /* FORGOT FORM */
+        .forgot-form { display: none; }
+        .forgot-form.show { display: block; }
+        .main-form.hidden { display: none; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; margin-bottom: 18px; background: none; border: none; padding: 0; font-family: inherit; transition: color 0.2s; }
+        .back-link:hover { color: var(--cyan); }
+        .back-link svg { width: 14px; height: 14px; }
+
+        /* Google OAuth notice */
+        .google-notice { font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-top: -6px; margin-bottom: 4px; }
+
+        .footer { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--text-muted); white-space: nowrap; z-index: 2; }
+        @media (max-width: 700px) { .page { grid-template-columns: 1fr; } .left { display: none; } .right { padding: 32px 24px; } }
+    </style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="page">
+
+    <!-- LEFT PANEL -->
+    <div class="left">
+        <div>
+            <div class="brand-mark">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 22 22" fill="none">
+                        <rect x="2" y="2" width="8" height="8" rx="2" fill="#001830"/>
+                        <rect x="12" y="2" width="8" height="8" rx="2" fill="#001830" opacity="0.7"/>
+                        <rect x="2" y="12" width="8" height="8" rx="2" fill="#001830" opacity="0.7"/>
+                        <rect x="12" y="12" width="8" height="8" rx="2" fill="#001830" opacity="0.4"/>
+                    </svg>
+                </div>
+                <span class="brand-name">ProjectHub</span>
+            </div>
+            <p class="brand-tag">Project Management System</p>
+            <h2 class="headline">Manage projects.<br><em>Ship faster.</em><br>Stay aligned.</h2>
+        </div>
+        <div class="features">
+            <div class="feature">Real-time project tracking</div>
+            <div class="feature">Role-based access — Admin & Client</div>
+            <div class="feature">WhatsApp-style project chat</div>
+            <div class="feature">Deadline & milestone alerts</div>
+            <div class="feature">Clean admin dashboard</div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+
+        <!-- Login / Sign Up page tabs -->
+        <div class="page-tabs">
+            <button class="page-tab active" id="tab-login"   onclick="switchPage('login')">Login</button>
+            <button class="page-tab"        id="tab-signup"  onclick="switchPage('signup')">Sign Up</button>
+        </div>
+
+        <!-- ════════════════════════════════
+             LOGIN FORM
+             ════════════════════════════════ -->
+        <div id="login-section">
+
+            <!-- Admin / Client role tabs -->
+            <div class="role-tabs">
+                <button class="role-tab" id="login-tab-admin"  onclick="setLoginRole('admin')">
+                    <svg viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11c0-2.5 2.2-4.5 5-4.5 1 0 1.8.3 2.5.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M9 8.5l1.5 1.5L13 7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Admin
+                </button>
+                <button class="role-tab active" id="login-tab-client" onclick="setLoginRole('client')">
+                    <svg viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Client
+                </button>
+                <button class="role-tab" id="login-tab-developer" onclick="setLoginRole('developer')">
+                    <svg viewBox="0 0 13 13" fill="none"><path d="M3 4.5L1 6.5L3 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 4.5L12 6.5L10 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 2.5L5.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    Developer
+                </button>
+            </div>
+
+            <div class="main-form" id="login-main-form">
+                <p class="form-eyebrow">Welcome back</p>
+                <h1 class="form-title">Login to your account</h1>
+
+                <div class="banner error" id="login-error"></div>
+
+                <!-- Google Login -->
+                <button class="btn-google" onclick="googleAuth()">
+                    <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    Continue with Google
+                </button>
+                <div class="google-notice" id="google-login-notice" style="display:none;">
+                    Google OAuth requires setup. Use email/password login below.
+                </div>
+
+                <div class="divider">or login with email</div>
+
+                <div class="field">
+                    <label class="field-label">Email Address</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1 5.5L8 10L15 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        <input type="email" id="login-email" placeholder="you@company.com" autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label">Password</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+                        <button class="toggle-pass" type="button" onclick="togglePass('login-password','eye1')">
+                            <svg id="eye1" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="forgot-row">
+                    <a class="forgot-link" href="#" onclick="showForgot(event)">Forgot password?</a>
+                </div>
+
+                <button class="btn-main" id="login-btn" onclick="doLogin()">
+                    <span id="login-btn-text">Login →</span>
+                </button>
+
+                <div class="switch-row">
+                    Don't have an account? <a class="switch-link" onclick="switchPage('signup')">Sign Up</a>
+                </div>
+            </div>
+
+            <!-- Forgot password -->
+            <div class="forgot-form" id="forgot-form">
+                <button class="back-link" onclick="hideForgot()">
+                    <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Back to Login
+                </button>
+                <p class="form-eyebrow">Account Recovery</p>
+                <h1 class="form-title">Forgot password?</h1>
+                <div class="banner error"   id="forgot-error"></div>
+                <div class="banner success" id="forgot-success"></div>
+                <div class="field">
+                    <label class="field-label">Email Address</label>
+                    <div class="field-wrap">
+                        <svg class="field-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1 5.5L8 10L15 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        <input type="email" id="forgot-email" placeholder="you@company.com">
+                    </div>
+                </div>
+                <button class="btn-main" id="forgot-btn" onclick="doForgot()">
+                    <span id="forgot-btn-text">Recover Account →</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             SIGN UP FORM
+             ════════════════════════════════ -->
+        <div id="signup-section" style="display:none;">
+            <p class="form-eyebrow">New account</p>
+            <h1 class="form-title">Create your account</h1>
+
+            <div class="banner error"   id="signup-error"></div>
+            <div class="banner success" id="signup-success"></div>
+
+            <!-- Google Signup -->
+            <button class="btn-google" onclick="googleAuth()">
+                <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Sign up with Google
+            </button>
+            <div class="google-notice" id="google-signup-notice" style="display:none;">
+                Google OAuth requires setup. Use email signup below.
+            </div>
+
+            <div class="divider">or sign up with email</div>
+
+            <div class="field">
+                <label class="field-label">Full Name</label>
+                <div class="field-wrap">
+                    <svg class="field-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 13.5c0-2.485 2.686-4.5 6-4.5s6 2.015 6 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <input type="text" id="signup-name" placeholder="Your full name" autocomplete="name">
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Email Address</label>
+                <div class="field-wrap">
+                    <svg class="field-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M1 5.5L8 10L15 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <input type="email" id="signup-email" placeholder="you@company.com" autocomplete="email">
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Password</label>
+                <div class="field-wrap">
+                    <svg class="field-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <input type="password" id="signup-password" placeholder="Min. 4 characters" autocomplete="new-password">
+                    <button class="toggle-pass" type="button" onclick="togglePass('signup-password','eye2')">
+                        <svg id="eye2" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label">Confirm Password</label>
+                <div class="field-wrap">
+                    <svg class="field-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    <input type="password" id="signup-confirm" placeholder="Repeat password" autocomplete="new-password">
+                </div>
+            </div>
+
+            <p style="font-size:11.5px;color:var(--text-muted);margin-bottom:14px;">
+                Note: All new accounts are registered as <strong style="color:var(--text-secondary);">Client</strong>. Contact admin to get admin access.
+            </p>
+
+            <button class="btn-main" id="signup-btn" onclick="doSignup()">
+                <span id="signup-btn-text">Create Account →</span>
+            </button>
+
+            <div class="switch-row">
+                Already have an account? <a class="switch-link" onclick="switchPage('login')">Login</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<p class="footer">© 2026 ProjectHub. All rights reserved.</p>
+
+<script>
+    // ── Skip if already logged in ─────────────────────────────
+    const existing = localStorage.getItem('user');
+    if (existing) {
+        const u = JSON.parse(existing);
+        const r = u.role ? u.role.toLowerCase() : '';
+        window.location.href = r === 'admin' ? 'Admin.html' : r === 'developer' ? 'MyTasks.html' : 'index.html';
+    }
+
+    let loginRole = 'client';
+
+    // ── Switch between Login and Sign Up tabs ─────────────────
+    function switchPage(page) {
+        document.getElementById('tab-login').classList.toggle('active',  page === 'login');
+        document.getElementById('tab-signup').classList.toggle('active', page === 'signup');
+        document.getElementById('login-section').style.display  = page === 'login'  ? 'block' : 'none';
+        document.getElementById('signup-section').style.display = page === 'signup' ? 'block' : 'none';
+        // Reset forgot form when switching
+        if (page === 'login') hideForgot();
+    }
+
+    // ── Admin / Client role tabs (login only) ─────────────────
+    function setLoginRole(role) {
+        loginRole = role;
+        document.getElementById('login-tab-admin').classList.toggle('active',     role === 'admin');
+        document.getElementById('login-tab-client').classList.toggle('active',    role === 'client');
+        document.getElementById('login-tab-developer').classList.toggle('active', role === 'developer');
+        document.getElementById('login-email').placeholder = role === 'admin' ? 'admin@gmail.com' : role === 'developer' ? 'dev@gmail.com' : 'you@company.com';
+    }
+
+    // ── Show / hide password ──────────────────────────────────
+    function togglePass(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon  = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `<path d="M2 2l12 12M6.5 6.7A3 3 0 0111.2 9M1 8s2.5-5 7-5c1.2 0 2.3.3 3.3.8M15 8s-.8 1.6-2.3 2.9M5.5 11.3C6.5 11.8 7.2 12 8 12c4.5 0 7-4 7-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>`;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>`;
+        }
+    }
+
+    // ── Google Auth ───────────────────────────────────────────
+    // Shows a notice — real Google OAuth needs backend setup (Spring Security + OAuth2)
+    function googleAuth() {
+        const isLogin = document.getElementById('login-section').style.display !== 'none';
+        const noticeId = isLogin ? 'google-login-notice' : 'google-signup-notice';
+        const notice = document.getElementById(noticeId);
+        notice.style.display = notice.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // ── LOGIN ─────────────────────────────────────────────────
+    async function doLogin() {
+        const email    = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const btn      = document.getElementById('login-btn');
+        const btnText  = document.getElementById('login-btn-text');
+        clearBanner('login-error');
+
+        if (!email)    { showBanner('login-error', '⚠ Please enter your email address.'); return; }
+        if (!password) { showBanner('login-error', '⚠ Please enter your password.'); return; }
+
+        btn.disabled = true; btnText.textContent = 'Logging in…';
+
+        try {
+            const res  = await fetch('/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+
+            if (!res.ok) { showBanner('login-error', '⚠ ' + (data.error || 'Invalid email or password.')); return; }
+
+            // Role mismatch check (FIXED)
+            if (loginRole === 'admin' && data.role.toLowerCase() !== 'admin') {
+                showBanner('login-error', '⚠ This is not an Admin account. Please select the correct role tab.');
+                return;
+            }
+            if (loginRole === 'client' && data.role.toLowerCase() !== 'client') {
+                showBanner('login-error', '⚠ This is not a Client account. Please select the correct role tab.');
+                return;
+            }
+            if (loginRole === 'developer' && data.role.toLowerCase() !== 'developer') {
+                showBanner('login-error', '⚠ This is not a Developer account. Please select the correct role tab.');
+                return;
+            }
+
+            localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify({id:data.id,name:data.name,email:data.email,role:data.role}));
+            const r = data.role.toLowerCase();
+            window.location.href = r === 'admin' ? 'Admin.html' : r === 'developer' ? 'MyTasks.html' : 'index.html';
+
+        } catch (e) {
+            showBanner('login-error', '⚠ Cannot reach server. Make sure Spring Boot is running on port 8081.');
+        } finally {
+            btn.disabled = false; btnText.textContent = 'Login →';
+        }
+    }
+
+    // ── SIGN UP ───────────────────────────────────────────────
+    async function doSignup() {
+        const name     = document.getElementById('signup-name').value.trim();
+        const email    = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const confirm  = document.getElementById('signup-confirm').value;
+        const btn      = document.getElementById('signup-btn');
+        const btnText  = document.getElementById('signup-btn-text');
+        clearBanner('signup-error'); clearBanner('signup-success');
+
+        if (!name)     { showBanner('signup-error', '⚠ Please enter your full name.'); return; }
+        if (!email)    { showBanner('signup-error', '⚠ Please enter your email.'); return; }
+        if (!password) { showBanner('signup-error', '⚠ Please enter a password.'); return; }
+        if (password.length < 4) { showBanner('signup-error', '⚠ Password must be at least 4 characters.'); return; }
+        if (password !== confirm)  { showBanner('signup-error', '⚠ Passwords do not match.'); return; }
+
+        btn.disabled = true; btnText.textContent = 'Creating account…';
+
+        try {
+            const res  = await fetch('/users/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, role: 'client' })
+            });
+            const data = await res.json();
+
+            if (!res.ok) { showBanner('signup-error', '⚠ ' + (data.error || 'Registration failed.')); return; }
+
+            showBanner('signup-success', '✓ Account created! Logging you in…');
+            localStorage.setItem('token', data.token); localStorage.setItem('user', JSON.stringify({id:data.id,name:data.name,email:data.email,role:data.role}));
+            setTimeout(() => window.location.href = 'index.html', 1500);
+
+        } catch (e) {
+            showBanner('signup-error', '⚠ Cannot reach server. Make sure Spring Boot is running on port 8081.');
+        } finally {
+            btn.disabled = false; btnText.textContent = 'Create Account →';
+        }
+    }
+
+    // ── FORGOT PASSWORD ───────────────────────────────────────
+    function showForgot(e) {
+        e.preventDefault();
+        document.getElementById('login-main-form').classList.add('hidden');
+        document.getElementById('forgot-form').classList.add('show');
+    }
+    function hideForgot() {
+        document.getElementById('forgot-form').classList.remove('show');
+        document.getElementById('login-main-form').classList.remove('hidden');
+    }
+    async function doForgot() {
+        const email = document.getElementById('forgot-email').value.trim();
+        clearBanner('forgot-error'); clearBanner('forgot-success');
+        if (!email) { showBanner('forgot-error', '⚠ Please enter your email.'); return; }
+
+        const btn = document.getElementById('forgot-btn');
+        btn.disabled = true;
+        document.getElementById('forgot-btn-text').textContent = 'Looking up…';
+
+        try {
+            // BUG FIX: /users is a protected endpoint — must send JWT token
+            // We use a guest token workaround: call /users/login with dummy to get 401,
+            // but actually we just check via login endpoint instead
+            const res = await fetch('/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: '__CHECK_EMAIL_ONLY__' })
+            });
+            const data = await res.json();
+            // If error is "Incorrect password" → email EXISTS
+            // If error is "No account found" → email does NOT exist
+            if (res.status === 401 && data.error === 'Incorrect password') {
+                showBanner('forgot-success', `✓ Account found for ${email}. Please login with your password.`);
+            } else if (res.status === 401 && data.error && data.error.includes('No account')) {
+                showBanner('forgot-error', '⚠ No account found with that email.');
+            } else {
+                showBanner('forgot-error', '⚠ No account found with that email.');
+            }
+        } catch { showBanner('forgot-error', '⚠ Cannot reach server.'); }
+        finally { btn.disabled = false; document.getElementById('forgot-btn-text').textContent = 'Recover Account →'; }
+    }
+
+    // ── Banner helpers ────────────────────────────────────────
+    function showBanner(id, msg)  { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); }
+    function clearBanner(id)      { document.getElementById(id).classList.remove('show'); }
+
+    // ── Enter key support ─────────────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        const signupVisible = document.getElementById('signup-section').style.display !== 'none';
+        if (signupVisible) doSignup();
+        else if (document.getElementById('forgot-form').classList.contains('show')) doForgot();
+        else doLogin();
+    });
+</script>
+</body>
+</html>
