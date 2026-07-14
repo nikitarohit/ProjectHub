@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                    .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/users/login", "/users/register").permitAll()
                         // Static files
@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/clients/**").authenticated()
                         .requestMatchers("/messages/**").authenticated()
                         .requestMatchers("/general-messages/**").authenticated()
-                        .requestMatchers("/tasks/**").authenticated()   // ← YE MISSING THA
+                        .requestMatchers("/tasks/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
